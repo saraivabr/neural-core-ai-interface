@@ -15,7 +15,7 @@ const _cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: 'Neural Core',
-  description: 'A sentient AI interface with surgical precision',
+  description: 'Uma interface de IA sensível com precisão cirúrgica',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -42,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

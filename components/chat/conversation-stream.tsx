@@ -33,10 +33,10 @@ export function ConversationStream({ messages, isThinking = false }: Conversatio
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center py-16 stagger-children">
           <p className="font-serif text-2xl text-foreground/80 mb-2">
-            Welcome to the Neural Core
+            Bem-vindo ao Neural Core
           </p>
           <p className="text-sm text-muted-foreground max-w-md text-center leading-relaxed">
-            A new kind of intelligence, ready to assist. Begin your discourse below.
+            Uma nova forma de inteligência, pronta para ajudar. Comece sua conversa abaixo.
           </p>
         </div>
       ) : (

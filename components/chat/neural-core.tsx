@@ -11,112 +11,112 @@ import { useTheme } from "@/components/theme-provider"
 const mockConversations: Conversation[] = [
   {
     id: "conv-1",
-    title: "Neural Network Architecture",
-    preview: "Discussion about building scalable AI interfaces with modular patterns...",
-    date: "Today",
+    title: "Arquitetura de Redes Neurais",
+    preview: "Discussão sobre como criar interfaces de IA escaláveis com padrões modulares...",
+    date: "Hoje",
     messages: [
       {
         id: "conv1-user-1",
         role: "user",
-        content: "How should I structure a neural network for image classification?",
+        content: "Como devo estruturar uma rede neural para classificação de imagens?",
         timestamp: "14:23"
       },
       {
         id: "conv1-ai-1",
         role: "assistant",
-        content: "## Neural Network Architecture for Image Classification\n\nWhen building an image classification network, consider these layers:\n\n- **Convolutional layers** for feature extraction\n- **Pooling layers** for dimensionality reduction\n- **Dense layers** for final classification\n\n```typescript\nconst model = sequential([\n  conv2d({ filters: 32, kernelSize: 3 }),\n  maxPooling2d({ poolSize: 2 }),\n  flatten(),\n  dense({ units: 128, activation: 'relu' }),\n  dense({ units: numClasses, activation: 'softmax' })\n]);\n```\n\nThis architecture balances accuracy and computational efficiency.",
+        content: "## Arquitetura de Rede Neural para Classificação de Imagens\n\nAo criar uma rede para classificação de imagens, considere estas camadas:\n\n- **Camadas convolucionais** para extração de características\n- **Camadas de pooling** para redução de dimensionalidade\n- **Camadas densas** para a classificação final\n\n```typescript\nconst model = sequential([\n  conv2d({ filters: 32, kernelSize: 3 }),\n  maxPooling2d({ poolSize: 2 }),\n  flatten(),\n  dense({ units: 128, activation: 'relu' }),\n  dense({ units: numClasses, activation: 'softmax' })\n]);\n```\n\nEssa arquitetura equilibra precisão e eficiência computacional.",
         timestamp: "14:24"
       },
       {
         id: "conv1-user-2",
         role: "user",
-        content: "What about transfer learning?",
+        content: "E quanto ao aprendizado por transferência?",
         timestamp: "14:26"
       },
       {
         id: "conv1-ai-2",
         role: "assistant",
-        content: "## Transfer Learning Approach\n\nTransfer learning allows you to leverage pre-trained models:\n\n- Use models like ResNet, VGG, or EfficientNet as a base\n- Freeze early layers to preserve learned features\n- Fine-tune later layers for your specific task\n\nThis significantly reduces training time and data requirements while often achieving better results than training from scratch.",
+        content: "## Abordagem com Aprendizado por Transferência\n\nO aprendizado por transferência permite aproveitar modelos pré-treinados:\n\n- Use modelos como ResNet, VGG ou EfficientNet como base\n- Congele as camadas iniciais para preservar características aprendidas\n- Ajuste as camadas finais para a sua tarefa específica\n\nIsso reduz bastante o tempo de treinamento e a necessidade de dados, além de frequentemente gerar resultados melhores do que treinar do zero.",
         timestamp: "14:27"
       }
     ]
   },
   {
     id: "conv-2",
-    title: "State Management Patterns",
-    preview: "Exploring reactive patterns and signal-based state handling...",
-    date: "Yesterday",
+    title: "Padrões de Gerenciamento de Estado",
+    preview: "Explorando padrões reativos e gerenciamento de estado baseado em sinais...",
+    date: "Ontem",
     messages: [
       {
         id: "conv2-user-1",
         role: "user",
-        content: "What's the best approach for state management in a React app?",
+        content: "Qual é a melhor abordagem para gerenciar estado em um app React?",
         timestamp: "09:15"
       },
       {
         id: "conv2-ai-1",
         role: "assistant",
-        content: "## Modern State Management\n\nThe landscape has evolved significantly. Here are current best practices:\n\n- **Local state**: useState for component-specific data\n- **Shared state**: Context API or Zustand for app-wide state\n- **Server state**: React Query or SWR for API data\n- **URL state**: Router params for shareable state\n\nChoose based on your specific needs rather than adopting one solution for everything.",
+        content: "## Gerenciamento de Estado Moderno\n\nO cenário evoluiu bastante. Aqui estão as boas práticas atuais:\n\n- **Estado local**: useState para dados específicos do componente\n- **Estado compartilhado**: Context API ou Zustand para estado global do app\n- **Estado do servidor**: React Query ou SWR para dados de API\n- **Estado na URL**: parâmetros de rota para estado compartilhável\n\nEscolha com base nas suas necessidades específicas em vez de adotar uma única solução para tudo.",
         timestamp: "09:16"
       }
     ]
   },
   {
     id: "conv-3",
-    title: "API Design Best Practices",
-    preview: "RESTful conventions and GraphQL considerations for scalable APIs...",
-    date: "Jan 15",
+    title: "Boas Práticas de Design de API",
+    preview: "Convenções RESTful e considerações sobre GraphQL para APIs escaláveis...",
+    date: "15 jan.",
     messages: [
       {
         id: "conv3-user-1",
         role: "user",
-        content: "Should I use REST or GraphQL for my new project?",
+        content: "Devo usar REST ou GraphQL no meu novo projeto?",
         timestamp: "16:42"
       },
       {
         id: "conv3-ai-1",
         role: "assistant",
-        content: "## REST vs GraphQL\n\nBoth have their place. Consider these factors:\n\n**REST is better when:**\n- You have simple, well-defined resources\n- Caching is critical\n- Team is familiar with REST patterns\n\n**GraphQL excels when:**\n- Clients need flexible data fetching\n- You have complex, nested relationships\n- Multiple clients need different data shapes\n\nFor most projects, REST remains the simpler choice with proven patterns.",
+        content: "## REST vs GraphQL\n\nAmbos têm seu espaço. Considere estes fatores:\n\n**REST é melhor quando:**\n- Você tem recursos simples e bem definidos\n- Cache é algo crítico\n- O time já conhece os padrões REST\n\n**GraphQL se destaca quando:**\n- Os clientes precisam de consultas de dados flexíveis\n- Você tem relacionamentos complexos e aninhados\n- Vários clientes precisam de formatos de dados diferentes\n\nPara a maioria dos projetos, REST continua sendo a escolha mais simples e com padrões já consolidados.",
         timestamp: "16:43"
       }
     ]
   },
   {
     id: "conv-4",
-    title: "Performance Optimization",
-    preview: "Strategies for improving web application performance metrics...",
-    date: "Jan 12",
+    title: "Otimização de Performance",
+    preview: "Estratégias para melhorar métricas de performance em aplicações web...",
+    date: "12 jan.",
     messages: [
       {
         id: "conv4-user-1",
         role: "user",
-        content: "My React app is slow. How can I optimize it?",
+        content: "Meu app React está lento. Como posso otimizar?",
         timestamp: "11:30"
       },
       {
         id: "conv4-ai-1",
         role: "assistant",
-        content: "## React Performance Optimization\n\nStart by identifying bottlenecks with React DevTools Profiler. Common optimizations:\n\n- **Memoization**: Use React.memo, useMemo, useCallback strategically\n- **Code splitting**: Lazy load routes and heavy components\n- **Virtualization**: Use react-window for long lists\n- **Bundle analysis**: Identify and remove unused dependencies\n\nRemember: measure first, optimize second. Premature optimization is the root of all evil.",
+        content: "## Otimização de Performance em React\n\nComece identificando gargalos com o React DevTools Profiler. Otimizações comuns:\n\n- **Memoização**: use React.memo, useMemo e useCallback de forma estratégica\n- **Code splitting**: carregue rotas e componentes pesados sob demanda\n- **Virtualização**: use react-window para listas longas\n- **Análise de bundle**: identifique e remova dependências não utilizadas\n\nLembre-se: primeiro meça, depois otimize. Otimização prematura é a raiz de muitos problemas.",
         timestamp: "11:31"
       }
     ]
   },
   {
     id: "conv-5",
-    title: "TypeScript Generics",
-    preview: "Deep dive into advanced TypeScript patterns and type inference...",
-    date: "Jan 10",
+    title: "Generics no TypeScript",
+    preview: "Um mergulho em padrões avançados de TypeScript e inferência de tipos...",
+    date: "10 jan.",
     messages: [
       {
         id: "conv5-user-1",
         role: "user",
-        content: "Can you explain TypeScript generics with practical examples?",
+        content: "Você pode explicar generics no TypeScript com exemplos práticos?",
         timestamp: "20:15"
       },
       {
         id: "conv5-ai-1",
         role: "assistant",
-        content: "## TypeScript Generics Explained\n\nGenerics enable reusable, type-safe code:\n\n```typescript\n// Generic function\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n\n// Generic interface\ninterface Repository<T> {\n  find(id: string): Promise<T>;\n  save(item: T): Promise<void>;\n}\n\n// Generic constraint\nfunction getProperty<T, K extends keyof T>(obj: T, key: K) {\n  return obj[key];\n}\n```\n\nGenerics shine when building libraries, utilities, and data structures that work with multiple types.",
+        content: "## Entendendo Generics no TypeScript\n\nGenerics permitem criar código reutilizável e seguro em relação a tipos:\n\n```typescript\n// Função genérica\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n\n// Interface genérica\ninterface Repository<T> {\n  find(id: string): Promise<T>;\n  save(item: T): Promise<void>;\n}\n\n// Restrição genérica\nfunction getProperty<T, K extends keyof T>(obj: T, key: K) {\n  return obj[key];\n}\n```\n\nGenerics brilham ao criar bibliotecas, utilitários e estruturas de dados que funcionam com vários tipos.",
         timestamp: "20:17"
       }
     ]
@@ -125,13 +125,13 @@ const mockConversations: Conversation[] = [
 
 // Mock AI responses for new messages
 const mockResponses = [
-  "## Understanding Your Request\n\nI've analyzed your query and identified the key components. Here's my interpretation:\n\n- The core intent appears to be exploratory\n- Context suggests a need for detailed explanation\n- I'll provide structured, actionable insights\n\nLet me elaborate on the specifics below.",
+  "## Entendendo seu pedido\n\nAnalisei sua solicitação e identifiquei os pontos principais. Eis minha interpretação:\n\n- A intenção central parece ser exploratória\n- O contexto sugere a necessidade de uma explicação detalhada\n- Vou fornecer insights estruturados e acionáveis\n\nVou detalhar melhor os pontos abaixo.",
 
-  "The architecture you're describing follows a modular pattern. Each component operates independently while maintaining coherent state through a centralized store.\n\n## Key Considerations\n\n- Separation of concerns is paramount\n- Event-driven communication reduces coupling\n- Type safety ensures reliability at scale\n\nThis approach scales elegantly as complexity grows.",
+  "A arquitetura que você está descrevendo segue um padrão modular. Cada componente opera de forma independente, mantendo um estado coerente por meio de uma store centralizada.\n\n## Pontos importantes\n\n- Separação de responsabilidades é fundamental\n- Comunicação orientada a eventos reduz acoplamento\n- Segurança de tipos garante confiabilidade em escala\n\nEssa abordagem escala de forma elegante à medida que a complexidade cresce.",
 
-  "## Code Implementation\n\nHere's how you might structure this:\n\n```typescript\ninterface NeuralConfig {\n  threshold: number;\n  layers: number;\n  activation: 'relu' | 'sigmoid' | 'tanh';\n}\n\nconst initializeCore = (config: NeuralConfig) => {\n  return new NeuralProcessor(config);\n};\n```\n\nThe implementation prioritizes clarity and extensibility.",
+  "## Implementação de código\n\nVeja uma forma de estruturar isso:\n\n```typescript\ninterface NeuralConfig {\n  threshold: number;\n  layers: number;\n  activation: 'relu' | 'sigmoid' | 'tanh';\n}\n\nconst initializeCore = (config: NeuralConfig) => {\n  return new NeuralProcessor(config);\n};\n```\n\nA implementação prioriza clareza e extensibilidade.",
 
-  "I see what you're working toward. The solution involves three interconnected layers:\n\n- Input processing and validation\n- Core transformation logic\n- Output formatting and delivery\n\nEach layer can be optimized independently while preserving the overall data flow integrity."
+  "Entendi o que você quer construir. A solução envolve três camadas interconectadas:\n\n- Processamento e validação de entrada\n- Lógica principal de transformação\n- Formatação e entrega da saída\n\nCada camada pode ser otimizada de forma independente, preservando a integridade do fluxo de dados."
 ]
 
 export function NeuralCore() {
@@ -145,7 +145,7 @@ export function NeuralCore() {
   
   const generateTimestamp = () => {
     const now = new Date()
-    return now.toLocaleTimeString("en-US", { 
+    return now.toLocaleTimeString("pt-BR", { 
       hour: "2-digit", 
       minute: "2-digit",
       hour12: false 
@@ -208,7 +208,7 @@ export function NeuralCore() {
           id: `conv-${Date.now()}`,
           title: userMessage.content.slice(0, 40) + (userMessage.content.length > 40 ? "..." : ""),
           preview: assistantMessage.content.slice(0, 80) + "...",
-          date: "Today",
+          date: "Hoje",
           messages: updatedMessages
         }
         setConversations(prev => [newConversation, ...prev])
@@ -232,7 +232,7 @@ export function NeuralCore() {
             //
           </span>
           <span className="font-mono text-[9px] text-muted-foreground/50 uppercase truncate max-w-[200px]">
-            {activeConversation ? activeConversation.title : "New Conversation"}
+            {activeConversation ? activeConversation.title : "Nova conversa"}
           </span>
         </div>
         
@@ -241,7 +241,7 @@ export function NeuralCore() {
           <button
             onClick={toggleTheme}
             className="flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-            aria-label="Toggle theme"
+            aria-label="Alternar tema"
           >
             {theme === "dark" ? (
               <Sun className="w-4 h-4" />
@@ -254,11 +254,11 @@ export function NeuralCore() {
           <button
             onClick={() => setSidebarOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-            aria-label="Open history sidebar"
+            aria-label="Abrir barra lateral do histórico"
           >
             <Layers className="w-4 h-4" />
             <span className="font-mono text-[10px] tracking-wider uppercase hidden sm:inline">
-              History
+              Histórico
             </span>
             {conversations.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 bg-violet-500/20 text-violet-400 font-mono text-[9px]">
