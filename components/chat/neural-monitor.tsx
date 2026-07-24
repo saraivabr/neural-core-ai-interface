@@ -17,7 +17,7 @@ export function NeuralMonitor({ isThinking = false }: NeuralMonitorProps) {
       {/* Status text */}
       <div className="flex items-center gap-2">
         <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-          {isThinking ? "Processing" : "Neural Core Active"}
+          {isThinking ? "Processando" : "Neural Core ativo"}
         </span>
         {isThinking && (
           <span className="flex gap-0.5">

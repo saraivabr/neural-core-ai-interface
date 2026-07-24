@@ -52,13 +52,13 @@ export function CommandDock({
           <div className="flex items-center gap-1 pb-1">
             <button 
               className="p-2 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-              aria-label="Add attachment"
+              aria-label="Adicionar anexo"
             >
               <Paperclip className="w-4 h-4" />
             </button>
             <button 
               className="p-2 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-              aria-label="Voice input"
+              aria-label="Entrada de voz"
             >
               <Mic className="w-4 h-4" />
             </button>
@@ -70,7 +70,7 @@ export function CommandDock({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Command the Neural Core..."
+            placeholder="Comande o Neural Core..."
             disabled={disabled}
             rows={1}
             className={cn(
@@ -85,7 +85,7 @@ export function CommandDock({
           <div className="flex items-center gap-1 pb-1">
             <button 
               className="p-2 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-              aria-label="AI suggestions"
+              aria-label="Sugestões da IA"
             >
               <Sparkles className="w-4 h-4" />
             </button>
@@ -100,7 +100,7 @@ export function CommandDock({
                   ? "text-foreground bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6]"
                   : "text-muted-foreground/30"
               )}
-              aria-label="Send message"
+              aria-label="Enviar mensagem"
             >
               <ArrowUp className="w-4 h-4" />
             </button>
@@ -110,7 +110,7 @@ export function CommandDock({
         {/* Bottom hint */}
         <div className="px-4 pb-3 flex items-center justify-between">
           <span className="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">
-            Enter to send / Shift+Enter for new line
+            Enter para enviar / Shift+Enter para nova linha
           </span>
           <span className="font-mono text-[10px] tracking-wider text-muted-foreground/60">
             v2.0.1

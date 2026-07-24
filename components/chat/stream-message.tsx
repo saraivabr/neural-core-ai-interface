@@ -26,7 +26,7 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `neural-core-response-${Date.now()}.txt`
+    a.download = `resposta-neural-core-${Date.now()}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -37,7 +37,7 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Neural Core Response",
+          title: "Resposta do Neural Core",
           text: content,
         })
       } catch (err) {
@@ -139,7 +139,7 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
                 "transition-all magnetic-hover",
                 "text-muted-foreground hover:text-foreground"
               )}
-              aria-label="Copy code"
+              aria-label="Copiar código"
             >
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
@@ -226,12 +226,12 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
             {copied ? (
               <>
                 <Check className="w-3 h-3" />
-                <span>COPIED</span>
+                <span>COPIADO</span>
               </>
             ) : (
               <>
                 <Copy className="w-3 h-3" />
-                <span>COPY</span>
+                <span>COPIAR</span>
               </>
             )}
           </button>
@@ -247,7 +247,7 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
             )}
           >
             <Download className="w-3 h-3" />
-            <span>DOWNLOAD</span>
+            <span>BAIXAR</span>
           </button>
           
           <span className="text-muted-foreground/30">|</span>
@@ -263,12 +263,12 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
             {shared ? (
               <>
                 <Check className="w-3 h-3" />
-                <span>SHARED</span>
+                <span>COMPARTILHADO</span>
               </>
             ) : (
               <>
                 <Share2 className="w-3 h-3" />
-                <span>SHARE</span>
+                <span>COMPARTILHAR</span>
               </>
             )}
           </button>

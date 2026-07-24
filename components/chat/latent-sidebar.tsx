@@ -57,21 +57,21 @@ export function LatentSidebar({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <span className="font-mono text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-            History
+            Histórico
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={onNewConversation}
               className="p-1.5 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-              aria-label="New conversation"
-              title="New conversation"
+              aria-label="Nova conversa"
+              title="Nova conversa"
             >
               <Plus className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
               className="p-1.5 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-              aria-label="Close sidebar"
+              aria-label="Fechar barra lateral"
             >
               <X className="w-4 h-4" />
             </button>
@@ -84,10 +84,10 @@ export function LatentSidebar({
             <div className="p-4 text-center">
               <MessageSquare className="w-8 h-8 mx-auto mb-3 text-muted-foreground/30" />
               <p className="text-[12px] text-muted-foreground/50">
-                No conversations yet
+                Ainda não há conversas
               </p>
               <p className="text-[11px] text-muted-foreground/30 mt-1">
-                Start a new conversation to begin
+                Inicie uma nova conversa para começar
               </p>
             </div>
           ) : (
