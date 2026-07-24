@@ -6,6 +6,15 @@ import { useState } from "react"
 import { JSX } from "react/jsx-runtime"
 import type { SpeakerKind } from "@/lib/conselho/parse-speakers"
 
+export interface SpeakerActionHandlers {
+  onPin?: () => void
+  onDeepen?: () => void
+  onChallenge?: () => void
+  onContinue?: () => void
+  onTreplica?: () => void
+  onVerdict?: () => void
+}
+
 interface StreamMessageProps {
   role: "user" | "assistant"
   content: string
@@ -16,9 +25,18 @@ interface StreamMessageProps {
     emoji: string
     kind: SpeakerKind
   }
+  actions?: SpeakerActionHandlers
+  showRoundActions?: boolean
 }
 
-export function StreamMessage({ role, content, timestamp, speaker }: StreamMessageProps) {
+export function StreamMessage({
+  role,
+  content,
+  timestamp,
+  speaker,
+  actions,
+  showRoundActions,
+}: StreamMessageProps) {
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
 
@@ -254,9 +272,29 @@ export function StreamMessage({ role, content, timestamp, speaker }: StreamMessa
         {renderContent()}
       </div>
 
-      {/* Actions */}
+      {/* Contextual council actions */}
+      {!isUser && speaker && actions && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {speaker.kind === "conselheiro" && (
+            <>
+              <ActionChip label="Citar no veredito" onClick={actions.onPin} />
+              <ActionChip label="Aprofunda só este" onClick={actions.onDeepen} />
+              <ActionChip label="Contesta" onClick={actions.onChallenge} tone="rose" />
+            </>
+          )}
+          {speaker.kind === "saraiva" && showRoundActions && (
+            <>
+              <ActionChip label="Continuar" onClick={actions.onContinue} tone="violet" />
+              <ActionChip label="Tréplica" onClick={actions.onTreplica} tone="rose" />
+              <ActionChip label="Veredito" onClick={actions.onVerdict} tone="cyan" />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Utility actions */}
       {!isUser && (
-        <div className="mt-2 flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+        <div className="mt-1.5 flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
           <button
             onClick={handleCopy}
             className={cn(
@@ -313,5 +351,34 @@ export function StreamMessage({ role, content, timestamp, speaker }: StreamMessa
         </div>
       )}
     </div>
+  )
+}
+
+function ActionChip({
+  label,
+  onClick,
+  tone = "default",
+}: {
+  label: string
+  onClick?: () => void
+  tone?: "default" | "rose" | "violet" | "cyan"
+}) {
+  if (!onClick) return null
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "px-2 py-1 rounded-md font-mono text-[10px] uppercase tracking-wide border transition-colors",
+        tone === "rose" && "border-rose-500/35 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20",
+        tone === "violet" &&
+          "border-violet-500/35 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20",
+        tone === "cyan" && "border-cyan-500/35 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20",
+        tone === "default" &&
+          "border-border/60 bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      )}
+    >
+      {label}
+    </button>
   )
 }

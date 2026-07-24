@@ -1,28 +1,34 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useMemo } from "react"
 import { ConversationStream, Message } from "./conversation-stream"
 import { CommandDock } from "./command-dock"
 import { LatentSidebar, Conversation } from "./latent-sidebar"
-import { Layers, Moon, Sun, ShieldAlert, Sparkles, Users } from "lucide-react"
+import { MesaBar } from "./mesa-bar"
+import { TensionCanvas, PinItem } from "./tension-canvas"
+import { Layers, Moon, Sun, Users } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
+import {
+  DEFAULT_ROSTER,
+  EnergyMode,
+  looksLikeSmallTalk,
+  seatedNames,
+  Seat,
+} from "@/lib/conselho/roster"
+import { parseSpeakerBlocks } from "@/lib/conselho/parse-speakers"
 
-// Mensagem inicial — Saraiva, Presidente do Conselho
 const INITIAL_COUNCIL_MESSAGE: Message = {
   id: "init-saraiva",
   role: "assistant",
-  content: `**Saraiva entra na sala.**
+  content: `<<<SPEAKER name="Saraiva" emoji="⚖️">>>
+Você entrou na sala do Conselho.
 
-Você entrou na mesa-redonda. Aqui não tem opinião genérica — tem **avatares com lentes** e atrito real.
+**Energia** em cima: Rápido (só eu) · Mesa · Tréplica · Veredito.
+**Mesa**: clique foca um conselheiro; duplo-clique senta ou levanta.
 
-🧠 Jobs · ⚡ Musk · 📊 Buffett · 📕 Sun Tzu · 🎨 Rick Rubin · 🧬 Sam Altman · e o banco completo.
-
-Eu sou **Saraiva** — Presidente do Conselho.
-Montamos a mesa (você escolhe quem senta, ou eu castro).
-Rodamos em **Debate**, **Tréplica**, e eu fecho o **Veredito** com o plano.
-
-**Qual é o tema — e quer escolher os conselheiros ou deixo a mesa comigo?**`,
-  timestamp: "Agora"
+Traga um **tema real** — ou diga "oi" no modo Rápido. Sem tema, não há guerra, só barulho.
+<<<END>>>`,
+  timestamp: "Agora",
 }
 
 export function NeuralCore() {
@@ -33,14 +39,32 @@ export function NeuralCore() {
   const [inputValue, setInputValue] = useState("")
   const [isThinking, setIsThinking] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [canvasOpen, setCanvasOpen] = useState(false)
+  const [mode, setMode] = useState<EnergyMode>("rapido")
+  const [roster, setRoster] = useState<Seat[]>(DEFAULT_ROSTER)
+  const [focusSeatId, setFocusSeatId] = useState<string | null>(null)
+  const [pins, setPins] = useState<PinItem[]>([])
   const abortControllerRef = useRef<AbortController | null>(null)
+
+  const focusSpeakerName = useMemo(() => {
+    if (!focusSeatId) return null
+    return roster.find((s) => s.id === focusSeatId)?.name ?? null
+  }, [focusSeatId, roster])
+
+  const activeSpeaker = useMemo(() => {
+    if (!isThinking) return null
+    const last = [...messages].reverse().find((m) => m.role === "assistant" && m.content)
+    if (!last?.content) return mode === "rapido" || mode === "veredito" ? "Saraiva" : null
+    const blocks = parseSpeakerBlocks(last.content)
+    return blocks[blocks.length - 1]?.name ?? "Saraiva"
+  }, [isThinking, messages, mode])
 
   const generateTimestamp = () => {
     const now = new Date()
-    return now.toLocaleTimeString("pt-BR", { 
-      hour: "2-digit", 
+    return now.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
       minute: "2-digit",
-      hour12: false 
+      hour12: false,
     })
   }
 
@@ -52,17 +76,34 @@ export function NeuralCore() {
   const handleNewConversation = useCallback(() => {
     setActiveConversation(null)
     setMessages([INITIAL_COUNCIL_MESSAGE])
+    setPins([])
+    setMode("rapido")
+    setFocusSeatId(null)
     setSidebarOpen(false)
   }, [])
 
-  const sendMessageContent = async (textToSend: string) => {
+  const toggleSeat = useCallback((id: string) => {
+    setRoster((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, seated: !s.seated } : s))
+    )
+  }, [])
+
+  const sendMessageContent = async (textToSend: string, modeOverride?: EnergyMode) => {
     if (!textToSend.trim() || isThinking) return
+
+    let effectiveMode = modeOverride ?? mode
+    // Auto-downgrade greetings to Rápido
+    if (looksLikeSmallTalk(textToSend) && effectiveMode === "mesa") {
+      effectiveMode = "rapido"
+      setMode("rapido")
+    }
+    if (modeOverride) setMode(modeOverride)
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
       content: textToSend.trim(),
-      timestamp: generateTimestamp()
+      timestamp: generateTimestamp(),
     }
 
     const updatedMessages = [...messages, userMessage]
@@ -70,24 +111,29 @@ export function NeuralCore() {
     setInputValue("")
     setIsThinking(true)
 
-    // ID para a mensagem da IA que vai receber o stream
     const assistantMessageId = `assistant-${Date.now()}`
     const assistantMessage: Message = {
       id: assistantMessageId,
       role: "assistant",
       content: "",
-      timestamp: generateTimestamp()
+      timestamp: generateTimestamp(),
     }
 
-    setMessages(prev => [...prev, assistantMessage])
+    setMessages((prev) => [...prev, assistantMessage])
+
+    const mesa = seatedNames(roster)
 
     try {
       abortControllerRef.current = new AbortController()
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updatedMessages }),
-        signal: abortControllerRef.current.signal
+        body: JSON.stringify({
+          messages: updatedMessages,
+          mode: effectiveMode,
+          mesa,
+        }),
+        signal: abortControllerRef.current.signal,
       })
 
       if (!response.ok) {
@@ -106,24 +152,21 @@ export function NeuralCore() {
         const chunk = decoder.decode(value, { stream: true })
         accumulatedText += chunk
 
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === assistantMessageId
-              ? { ...msg, content: accumulatedText }
-              : msg
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId ? { ...msg, content: accumulatedText } : msg
           )
         )
       }
 
-      // Atualizar no histórico de conversas
       const finalMessages = [
         ...updatedMessages,
-        { ...assistantMessage, content: accumulatedText }
+        { ...assistantMessage, content: accumulatedText },
       ]
 
       if (activeConversation) {
-        setConversations(prev =>
-          prev.map(conv =>
+        setConversations((prev) =>
+          prev.map((conv) =>
             conv.id === activeConversation.id
               ? { ...conv, messages: finalMessages, preview: userMessage.content }
               : conv
@@ -132,22 +175,27 @@ export function NeuralCore() {
       } else {
         const newConv: Conversation = {
           id: `conv-${Date.now()}`,
-          title: userMessage.content.slice(0, 40) + (userMessage.content.length > 40 ? "..." : ""),
+          title:
+            userMessage.content.slice(0, 40) +
+            (userMessage.content.length > 40 ? "..." : ""),
           preview: accumulatedText.slice(0, 80) + "...",
           date: "Hoje",
-          messages: finalMessages
+          messages: finalMessages,
         }
-        setConversations(prev => [newConv, ...prev])
+        setConversations((prev) => [newConv, ...prev])
         setActiveConversation(newConv)
       }
     } catch (err: any) {
       if (err.name !== "AbortError") {
-        setMessages(prev =>
-          prev.map(msg =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg.id === assistantMessageId
               ? {
                   ...msg,
-                  content: "⚠️ **Erro ao conectar com O Conselho:** " + (err.message || "Erro desconhecido")
+                  content:
+                    "<<<SPEAKER name=\"Saraiva\" emoji=\"⚖️\">>>\n⚠️ Erro ao conectar com O Conselho: " +
+                    (err.message || "Erro desconhecido") +
+                    "\n<<<END>>>",
                 }
               : msg
           )
@@ -160,18 +208,69 @@ export function NeuralCore() {
 
   const handleSubmit = useCallback(() => {
     sendMessageContent(inputValue)
-  }, [inputValue, isThinking, messages])
+  }, [inputValue, isThinking, messages, mode, roster])
 
-  const handleQuickOption = (optionText: string) => {
-    sendMessageContent(optionText)
+  const handlePin = (speaker: string, emoji: string, text: string) => {
+    setPins((prev) => [
+      {
+        id: `pin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        speaker,
+        emoji,
+        text,
+      },
+      ...prev,
+    ])
+    setCanvasOpen(true)
+  }
+
+  const handleDeepen = (speaker: string) => {
+    sendMessageContent(
+      `Aprofunda só a perspectiva de ${speaker}. Um SPEAKER só dele/dela, com mais concreto e menos abstração.`,
+      mode === "rapido" ? "mesa" : mode
+    )
+  }
+
+  const handleChallenge = (speaker: string) => {
+    setMode("treplica")
+    sendMessageContent(
+      `Modo Tréplica: outro conselheiro sentado contesta ${speaker} pelo nome. Depois ${speaker} responde. Tags SPEAKER separadas.`,
+      "treplica"
+    )
+  }
+
+  const handleContinue = () => {
+    setMode("mesa")
+    sendMessageContent("1 - Continuar no Debate com a mesa sentada. Próximo giro.", "mesa")
+  }
+
+  const handleTreplica = () => {
+    setMode("treplica")
+    sendMessageContent(
+      "2 - Entrar em Tréplica: os conselheiros se respondem e discordam pelo nome.",
+      "treplica"
+    )
+  }
+
+  const handleVerdict = () => {
+    const pinBlock =
+      pins.length > 0
+        ? `\n\nPins do usuário para incorporar no veredito:\n${pins
+            .map((p, i) => `${i + 1}. [${p.speaker}] ${p.text.slice(0, 200)}`)
+            .join("\n")}`
+        : ""
+    setMode("veredito")
+    sendMessageContent(
+      `5 - Veredito de Saraiva + plano de ataque. Só Saraiva fala. Consolide acordo, tensão e ações.` +
+        pinBlock,
+      "veredito"
+    )
+    setCanvasOpen(false)
   }
 
   return (
     <div className="h-screen flex flex-col bg-background relative overflow-hidden">
-      {/* Overlay */}
       <div className="noise-overlay" aria-hidden="true" />
-      
-      {/* Header */}
+
       <header className="flex items-center justify-between px-6 md:px-16 lg:px-24 py-4 border-b border-border bg-background/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400">
@@ -180,16 +279,13 @@ export function NeuralCore() {
               O Conselho
             </span>
           </div>
-          <span className="font-mono text-[9px] text-muted-foreground/50">
-            //
-          </span>
+          <span className="font-mono text-[9px] text-muted-foreground/50">//</span>
           <span className="font-mono text-[10px] text-violet-400 uppercase font-medium">
             Líder: Saraiva
           </span>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          {/* Alternar tema */}
           <button
             onClick={toggleTheme}
             className="flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground transition-colors"
@@ -197,8 +293,7 @@ export function NeuralCore() {
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          
-          {/* Histórico */}
+
           <button
             onClick={() => setSidebarOpen(true)}
             className="flex items-center gap-2 px-3 py-1.5 text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-md"
@@ -215,51 +310,73 @@ export function NeuralCore() {
           </button>
         </div>
       </header>
-      
-      {/* Área principal do chat */}
-      <ConversationStream 
-        messages={messages} 
-        isThinking={isThinking} 
+
+      <MesaBar
+        roster={roster}
+        mode={mode}
+        activeSpeaker={activeSpeaker}
+        focusSeatId={focusSeatId}
+        onModeChange={setMode}
+        onToggleSeat={toggleSeat}
+        onFocusSeat={setFocusSeatId}
+        onOpenCanvas={() => setCanvasOpen(true)}
+        isThinking={isThinking}
       />
 
-      {/* Botões rápidos de controle do Round (quando não está pensando) */}
+      <ConversationStream
+        messages={messages}
+        isThinking={isThinking}
+        focusSpeaker={focusSpeakerName}
+        onPin={handlePin}
+        onDeepen={handleDeepen}
+        onChallenge={handleChallenge}
+        onContinue={handleContinue}
+        onTreplica={handleTreplica}
+        onVerdict={handleVerdict}
+      />
+
+      {/* Contextual strip — only when not thinking and past first message */}
       {!isThinking && messages.length > 1 && (
         <div className="px-6 md:px-16 lg:px-24 py-2 border-t border-border/40 bg-background/50 backdrop-blur-sm flex flex-wrap items-center justify-center gap-2 z-10">
-          <span className="font-mono text-[10px] text-muted-foreground uppercase mr-1">Comandos do Round:</span>
           <button
-            onClick={() => handleQuickOption("1 - Avançar para o próximo round")}
+            onClick={() => {
+              setMode("mesa")
+              sendMessageContent(
+                "Convocar a mesa agora no tema atual. Conselheiros sentados falam em SPEAKER tags.",
+                "mesa"
+              )
+            }}
             className="px-2.5 py-1 text-[11px] font-mono bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded transition-all"
           >
-            1️⃣ Próximo Round
+            Convocar Mesa
           </button>
           <button
-            onClick={() => handleQuickOption("2 - Aprofundar um ponto específico")}
-            className="px-2.5 py-1 text-[11px] font-mono bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded transition-all"
+            onClick={handleContinue}
+            className="px-2.5 py-1 text-[11px] font-mono bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded transition-all"
           >
-            2️⃣ Aprofundar
+            Continuar
           </button>
           <button
-            onClick={() => handleQuickOption("3 - Convocar mente adicional ao Conselho")}
-            className="px-2.5 py-1 text-[11px] font-mono bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded transition-all"
-          >
-            3️⃣ Convocar Mente
-          </button>
-          <button
-            onClick={() => handleQuickOption("4 - Provocar duelo entre duas mentes")}
+            onClick={handleTreplica}
             className="px-2.5 py-1 text-[11px] font-mono bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded transition-all"
           >
-            4️⃣ Provocar Duelo
+            Tréplica
           </button>
           <button
-            onClick={() => handleQuickOption("5 - Ir direto ao Plano de Ataque")}
+            onClick={handleVerdict}
             className="px-2.5 py-1 text-[11px] font-mono bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded transition-all"
           >
-            5️⃣ Plano de Ataque
+            Veredito
+          </button>
+          <button
+            onClick={() => setCanvasOpen(true)}
+            className="px-2.5 py-1 text-[11px] font-mono bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded transition-all"
+          >
+            Canvas ({pins.length})
           </button>
         </div>
       )}
-      
-      {/* Dock de comandos */}
+
       <CommandDock
         value={inputValue}
         onChange={setInputValue}
@@ -267,15 +384,22 @@ export function NeuralCore() {
         isThinking={isThinking}
         disabled={isThinking}
       />
-      
-      {/* Barra lateral do Histórico */}
-      <LatentSidebar 
-        isOpen={sidebarOpen} 
+
+      <LatentSidebar
+        isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         conversations={conversations}
         activeConversationId={activeConversation?.id ?? null}
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
+      />
+
+      <TensionCanvas
+        open={canvasOpen}
+        onClose={() => setCanvasOpen(false)}
+        pins={pins}
+        onRemovePin={(id) => setPins((p) => p.filter((x) => x.id !== id))}
+        onGenerateVerdict={handleVerdict}
       />
     </div>
   )

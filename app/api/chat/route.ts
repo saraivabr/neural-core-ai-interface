@@ -7,7 +7,8 @@ export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json()
+    const body = await req.json()
+    const { messages, mode = "mesa", mesa = [] as string[] } = body
 
     const apiKey = process.env.OPENAI_API_KEY
 
@@ -38,8 +39,31 @@ export async function POST(req: NextRequest) {
       knowledge = knowledge.slice(0, MAX_KNOWLEDGE) + "\n\n[... knowledge truncado ...]"
     }
 
+    const mesaList =
+      Array.isArray(mesa) && mesa.length > 0
+        ? mesa.join(", ")
+        : "Steve Jobs, Warren Buffett, Rick Rubin"
+
+    const runtimeControl = `
+# CONTROLE DE SESSÃO (UI — OBRIGATÓRIO)
+
+Modo de energia atual: **${mode}**
+Mesa sentada (só estes podem falar como conselheiros): ${mesaList}
+
+## Regras por modo
+- **rapido**: SOMENTE Saraiva em um único bloco SPEAKER. Proibido convocar Jobs/Musk/etc. Ideal para oi, td bem, dúvidas curtas.
+- **mesa**: Saraiva abre pauta em 1 bloco, depois 1 SPEAKER por conselheiro sentado (turn-by-turn). Sem tréplica cruzada ainda.
+- **treplica**: Conselheiros se respondem pelo nome. Um SPEAKER por fala. Cite quem está rebatendo.
+- **veredito**: SOMENTE Saraiva. Consolida acordo, tensão e plano (tabela). Não invente novas vozes.
+
+Se o usuário só cumprimentar e o modo for rapido: responda humano e curto, peça o tema real.
+Se o usuário pedir mesa/conselho com tema: use o modo mesa e a lista sentada.
+Sempre use tags <<<SPEAKER name="..." emoji="...">>> ... <<<END>>> (um por pessoa).
+`
+
     const systemInstruction = [
       systemCore,
+      runtimeControl,
       knowledge && "\n\n# KNOWLEDGE BASE DO CONSELHO\n\n" + knowledge,
     ]
       .filter(Boolean)
