@@ -3,77 +3,83 @@
 import { cn } from "@/lib/utils"
 import { Check, Copy, Download, Share2 } from "lucide-react"
 import { useState } from "react"
-import { JSX } from "react/jsx-runtime" // Import JSX
+import { JSX } from "react/jsx-runtime"
+import type { SpeakerKind } from "@/lib/conselho/parse-speakers"
 
 interface StreamMessageProps {
   role: "user" | "assistant"
   content: string
   timestamp?: string
+  /** When set, renders as a counselor/Saraiva chat bubble */
+  speaker?: {
+    name: string
+    emoji: string
+    kind: SpeakerKind
+  }
 }
 
-export function StreamMessage({ role, content, timestamp }: StreamMessageProps) {
+export function StreamMessage({ role, content, timestamp, speaker }: StreamMessageProps) {
   const [copied, setCopied] = useState(false)
   const [shared, setShared] = useState(false)
-  
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
-  
+
   const handleDownload = () => {
     const blob = new Blob([content], { type: "text/plain" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `resposta-neural-core-${Date.now()}.txt`
+    a.download = `conselho-${speaker?.name || "resposta"}-${Date.now()}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
-  
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Resposta do Neural Core",
+          title: speaker ? `${speaker.name} — O Conselho` : "O Conselho",
           text: content,
         })
-      } catch (err) {
-        // User cancelled or share failed, fallback to copy
+      } catch {
         await handleCopy()
       }
     } else {
-      // Fallback: copy link/content to clipboard
       await navigator.clipboard.writeText(content)
       setShared(true)
       setTimeout(() => setShared(false), 2000)
     }
   }
-  
+
   const isUser = role === "user"
-  
-  // Parse inline markdown (bold, italic, inline code)
+  const kind = speaker?.kind || "narrador"
+
   const parseInlineMarkdown = (text: string) => {
     const parts: (string | JSX.Element)[] = []
     let remaining = text
     let keyIndex = 0
-    
+
     while (remaining.length > 0) {
-      // Check for inline code first (highest priority)
       const inlineCodeMatch = remaining.match(/^`([^`]+)`/)
       if (inlineCodeMatch) {
         parts.push(
-          <code key={keyIndex++} className="px-1.5 py-0.5 bg-muted text-accent text-[13px] font-mono rounded">
+          <code
+            key={keyIndex++}
+            className="px-1.5 py-0.5 bg-muted text-accent text-[13px] font-mono rounded"
+          >
             {inlineCodeMatch[1]}
           </code>
         )
         remaining = remaining.slice(inlineCodeMatch[0].length)
         continue
       }
-      
-      // Check for bold (**text**)
+
       const boldMatch = remaining.match(/^\*\*([^*]+)\*\*/)
       if (boldMatch) {
         parts.push(
@@ -84,8 +90,7 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
         remaining = remaining.slice(boldMatch[0].length)
         continue
       }
-      
-      // Check for italic (*text*)
+
       const italicMatch = remaining.match(/^\*([^*]+)\*/)
       if (italicMatch) {
         parts.push(
@@ -96,14 +101,12 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
         remaining = remaining.slice(italicMatch[0].length)
         continue
       }
-      
-      // Find next special character or add plain text
+
       const nextSpecial = remaining.search(/[`*]/)
       if (nextSpecial === -1) {
         parts.push(remaining)
         break
       } else if (nextSpecial === 0) {
-        // Special char that didn't match patterns, treat as plain text
         parts.push(remaining[0])
         remaining = remaining.slice(1)
       } else {
@@ -111,110 +114,149 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
         remaining = remaining.slice(nextSpecial)
       }
     }
-    
+
     return parts
   }
-  
-  // Simple markdown-like rendering for AI responses
+
   const renderContent = () => {
     if (isUser) {
       return <p className="text-[15px] leading-relaxed">{content}</p>
     }
-    
-    // Split content by code blocks and render
+
     const parts = content.split(/(```[\s\S]*?```)/g)
-    
+
     return parts.map((part, index) => {
       if (part.startsWith("```")) {
         const codeContent = part.replace(/```\w*\n?/g, "").replace(/```$/, "")
         return (
-          <div key={index} className="my-4 relative group">
+          <div key={index} className="my-3 relative group">
             <pre className="code-block p-4 overflow-x-auto">
               <code className="text-[13px] text-muted-foreground">{codeContent}</code>
             </pre>
-            <button
-              onClick={handleCopy}
-              className={cn(
-                "absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100",
-                "transition-all magnetic-hover",
-                "text-muted-foreground hover:text-foreground"
-              )}
-              aria-label="Copiar código"
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
           </div>
         )
       }
-      
-      // Check for headers (## Header)
+
       const lines = part.split("\n")
       return lines.map((line, lineIndex) => {
         if (line.startsWith("## ")) {
           return (
-            <h2 key={`${index}-${lineIndex}`} className="font-serif text-xl font-medium mt-6 mb-3 text-foreground">
+            <h2
+              key={`${index}-${lineIndex}`}
+              className="font-serif text-lg font-medium mt-3 mb-2 text-foreground"
+            >
               {parseInlineMarkdown(line.replace("## ", ""))}
             </h2>
           )
         }
         if (line.startsWith("# ")) {
           return (
-            <h1 key={`${index}-${lineIndex}`} className="font-serif text-2xl font-medium mt-6 mb-3 text-foreground">
+            <h1
+              key={`${index}-${lineIndex}`}
+              className="font-serif text-xl font-medium mt-3 mb-2 text-foreground"
+            >
               {parseInlineMarkdown(line.replace("# ", ""))}
             </h1>
           )
         }
-        if (line.startsWith("- ")) {
+        if (line.startsWith("- ") || /^\d+[\.\)]\s/.test(line)) {
           return (
-            <li key={`${index}-${lineIndex}`} className="text-[15px] leading-relaxed ml-4 text-foreground/90">
-              {parseInlineMarkdown(line.replace("- ", ""))}
+            <li
+              key={`${index}-${lineIndex}`}
+              className="text-[14px] leading-relaxed ml-4 text-foreground/90 list-disc"
+            >
+              {parseInlineMarkdown(line.replace(/^(?:- |\d+[\.\)]\s)/, ""))}
             </li>
           )
         }
         if (line.trim() === "") {
-          return <div key={`${index}-${lineIndex}`} className="h-3" />
+          return <div key={`${index}-${lineIndex}`} className="h-2" />
         }
         return (
-          <p key={`${index}-${lineIndex}`} className="text-[15px] leading-relaxed text-foreground/90">
+          <p
+            key={`${index}-${lineIndex}`}
+            className="text-[14px] md:text-[15px] leading-relaxed text-foreground/90"
+          >
             {parseInlineMarkdown(line)}
           </p>
         )
       })
     })
   }
-  
+
+  const tagLabel = isUser
+    ? "USER_01"
+    : speaker
+      ? speaker.kind === "saraiva"
+        ? "SARAIVA · PRESIDENTE"
+        : speaker.name.toUpperCase().replace(/\s+/g, "_")
+      : "NEURAL_CORE"
+
+  const bubbleAccent =
+    kind === "saraiva"
+      ? "border-l-amber-500/80 bg-amber-500/[0.04]"
+      : kind === "conselheiro"
+        ? "border-l-primary/70 bg-primary/[0.03]"
+        : "border-l-border bg-muted/20"
+
   return (
     <div
       className={cn(
-        "animate-drift-up",
+        "animate-drift-up w-full",
         isUser ? "flex flex-col items-end" : "flex flex-col items-start"
       )}
     >
       {/* Tag */}
-      <div className="flex items-center gap-2 mb-2">
-        <span className="font-mono text-[10px] tracking-[0.15em] text-muted-foreground uppercase">
-          {isUser ? "USER_01" : "NEURAL_CORE"}
-        </span>
-        {timestamp && (
-          <span className="font-mono text-[10px] text-muted-foreground/50">
-            {timestamp}
+      <div className="flex items-center gap-2 mb-2 px-0.5">
+        {!isUser && speaker && (
+          <span className="text-base leading-none" aria-hidden>
+            {speaker.emoji}
           </span>
         )}
+        <span className="font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
+          {tagLabel}
+        </span>
+        {timestamp && (
+          <span className="font-mono text-[10px] text-muted-foreground/50">{timestamp}</span>
+        )}
       </div>
-      
-      {/* Content */}
+
+      {/* Bubble */}
       <div
         className={cn(
-          "max-w-[85%]",
-          isUser ? "text-right text-muted-foreground" : "text-left"
+          "max-w-[min(92%,42rem)]",
+          isUser
+            ? "text-right text-muted-foreground"
+            : cn(
+                "text-left w-full rounded-r-xl rounded-bl-xl border border-border/40",
+                "border-l-[3px] px-4 py-3.5 shadow-sm",
+                bubbleAccent
+              )
         )}
       >
+        {!isUser && speaker && (
+          <div className="mb-2 flex items-center gap-2">
+            <span className="font-serif text-[15px] font-medium text-foreground tracking-tight">
+              {speaker.name}
+            </span>
+            {speaker.kind === "saraiva" && (
+              <span className="font-mono text-[9px] tracking-wider uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                Presidente
+              </span>
+            )}
+            {speaker.kind === "conselheiro" && (
+              <span className="font-mono text-[9px] tracking-wider uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary/90">
+                Conselheiro
+              </span>
+            )}
+          </div>
+        )}
         {renderContent()}
       </div>
-      
-      {/* Action buttons for AI messages */}
+
+      {/* Actions */}
       {!isUser && (
-        <div className="mt-3 flex items-center gap-1">
+        <div className="mt-2 flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
           <button
             onClick={handleCopy}
             className={cn(
@@ -235,9 +277,7 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
               </>
             )}
           </button>
-          
           <span className="text-muted-foreground/30">|</span>
-          
           <button
             onClick={handleDownload}
             className={cn(
@@ -249,9 +289,7 @@ export function StreamMessage({ role, content, timestamp }: StreamMessageProps) 
             <Download className="w-3 h-3" />
             <span>BAIXAR</span>
           </button>
-          
           <span className="text-muted-foreground/30">|</span>
-          
           <button
             onClick={handleShare}
             className={cn(
