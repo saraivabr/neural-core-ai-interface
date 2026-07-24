@@ -18,15 +18,32 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Carregar instruções do sistema do Conselho (Saraiva como líder)
-    const instructionsPath = path.join(
-      process.cwd(),
-      "lib/conselho/SYSTEM_INSTRUCTIONS.md"
-    )
-    let systemInstruction = ""
-    if (fs.existsSync(instructionsPath)) {
-      systemInstruction = fs.readFileSync(instructionsPath, "utf-8")
+    // Conselho: Saraiva (presidente) + knowledge de avatares/modos
+    const conselhoDir = path.join(process.cwd(), "lib/conselho")
+    const loadMd = (name: string) => {
+      const p = path.join(conselhoDir, name)
+      return fs.existsSync(p) ? fs.readFileSync(p, "utf-8") : ""
     }
+
+    const systemCore = loadMd("SYSTEM_INSTRUCTIONS.md")
+    const extras = loadMd("CONSELHEIROS_EXTRAS.md")
+    // Profiles e frameworks são grandes — inclui resumo dos extras sempre;
+    // profiles completos só se couberem de forma razoável no system.
+    const profiles = loadMd("MINDS_PROFILES.md")
+    const frameworks = loadMd("DEBATE_FRAMEWORKS.md")
+
+    const MAX_KNOWLEDGE = 120_000
+    let knowledge = [extras, profiles, frameworks].filter(Boolean).join("\n\n---\n\n")
+    if (knowledge.length > MAX_KNOWLEDGE) {
+      knowledge = knowledge.slice(0, MAX_KNOWLEDGE) + "\n\n[... knowledge truncado ...]"
+    }
+
+    const systemInstruction = [
+      systemCore,
+      knowledge && "\n\n# KNOWLEDGE BASE DO CONSELHO\n\n" + knowledge,
+    ]
+      .filter(Boolean)
+      .join("\n")
 
     const openai = new OpenAI({ apiKey })
 

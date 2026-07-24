@@ -7,19 +7,21 @@ import { LatentSidebar, Conversation } from "./latent-sidebar"
 import { Layers, Moon, Sun, ShieldAlert, Sparkles, Users } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 
-// Mensagem inicial padrão do Saraiva (MenteMestra)
+// Mensagem inicial — Saraiva, Presidente do Conselho
 const INITIAL_COUNCIL_MESSAGE: Message = {
   id: "init-saraiva",
   role: "assistant",
   content: `**Saraiva entra na sala.**
 
-Você acaba de entrar na sala mais perigosa que existe — não por armas, mas por ideias. Aqui sentaram generais que conquistaram impérios, empreendedores que dobraram a realidade, filósofos que destruíram certezas e as reconstruíram do zero.
+Você entrou na mesa-redonda. Aqui não tem opinião genérica — tem **avatares com lentes** e atrito real.
 
-Eu sou o **Saraiva**. Meu trabalho é convocar as mentes certas, orquestrar o conflito entre elas, e garantir que você saia daqui com um plano de guerra — não com conselhos genéricos.
+🧠 Jobs · ⚡ Musk · 📊 Buffett · 📕 Sun Tzu · 🎨 Rick Rubin · 🧬 Sam Altman · e o banco completo.
 
-As cadeiras estão vazias. O Conselho só se reúne quando há um problema digno.
+Eu sou **Saraiva** — Presidente do Conselho.
+Montamos a mesa (você escolhe quem senta, ou eu castro).
+Rodamos em **Debate**, **Tréplica**, e eu fecho o **Veredito** com o plano.
 
-**Qual é o seu problema?**`,
+**Qual é o tema — e quer escolher os conselheiros ou deixo a mesa comigo?**`,
   timestamp: "Agora"
 }
 
