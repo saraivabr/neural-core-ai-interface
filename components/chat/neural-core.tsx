@@ -1,148 +1,38 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { ConversationStream, Message } from "./conversation-stream"
 import { CommandDock } from "./command-dock"
 import { LatentSidebar, Conversation } from "./latent-sidebar"
-import { Layers, Moon, Sun } from "lucide-react"
+import { Layers, Moon, Sun, ShieldAlert, Sparkles, Users } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 
-// Mock conversations for history
-const mockConversations: Conversation[] = [
-  {
-    id: "conv-1",
-    title: "Arquitetura de Redes Neurais",
-    preview: "Discussão sobre como criar interfaces de IA escaláveis com padrões modulares...",
-    date: "Hoje",
-    messages: [
-      {
-        id: "conv1-user-1",
-        role: "user",
-        content: "Como devo estruturar uma rede neural para classificação de imagens?",
-        timestamp: "14:23"
-      },
-      {
-        id: "conv1-ai-1",
-        role: "assistant",
-        content: "## Arquitetura de Rede Neural para Classificação de Imagens\n\nAo criar uma rede para classificação de imagens, considere estas camadas:\n\n- **Camadas convolucionais** para extração de características\n- **Camadas de pooling** para redução de dimensionalidade\n- **Camadas densas** para a classificação final\n\n```typescript\nconst model = sequential([\n  conv2d({ filters: 32, kernelSize: 3 }),\n  maxPooling2d({ poolSize: 2 }),\n  flatten(),\n  dense({ units: 128, activation: 'relu' }),\n  dense({ units: numClasses, activation: 'softmax' })\n]);\n```\n\nEssa arquitetura equilibra precisão e eficiência computacional.",
-        timestamp: "14:24"
-      },
-      {
-        id: "conv1-user-2",
-        role: "user",
-        content: "E quanto ao aprendizado por transferência?",
-        timestamp: "14:26"
-      },
-      {
-        id: "conv1-ai-2",
-        role: "assistant",
-        content: "## Abordagem com Aprendizado por Transferência\n\nO aprendizado por transferência permite aproveitar modelos pré-treinados:\n\n- Use modelos como ResNet, VGG ou EfficientNet como base\n- Congele as camadas iniciais para preservar características aprendidas\n- Ajuste as camadas finais para a sua tarefa específica\n\nIsso reduz bastante o tempo de treinamento e a necessidade de dados, além de frequentemente gerar resultados melhores do que treinar do zero.",
-        timestamp: "14:27"
-      }
-    ]
-  },
-  {
-    id: "conv-2",
-    title: "Padrões de Gerenciamento de Estado",
-    preview: "Explorando padrões reativos e gerenciamento de estado baseado em sinais...",
-    date: "Ontem",
-    messages: [
-      {
-        id: "conv2-user-1",
-        role: "user",
-        content: "Qual é a melhor abordagem para gerenciar estado em um app React?",
-        timestamp: "09:15"
-      },
-      {
-        id: "conv2-ai-1",
-        role: "assistant",
-        content: "## Gerenciamento de Estado Moderno\n\nO cenário evoluiu bastante. Aqui estão as boas práticas atuais:\n\n- **Estado local**: useState para dados específicos do componente\n- **Estado compartilhado**: Context API ou Zustand para estado global do app\n- **Estado do servidor**: React Query ou SWR para dados de API\n- **Estado na URL**: parâmetros de rota para estado compartilhável\n\nEscolha com base nas suas necessidades específicas em vez de adotar uma única solução para tudo.",
-        timestamp: "09:16"
-      }
-    ]
-  },
-  {
-    id: "conv-3",
-    title: "Boas Práticas de Design de API",
-    preview: "Convenções RESTful e considerações sobre GraphQL para APIs escaláveis...",
-    date: "15 jan.",
-    messages: [
-      {
-        id: "conv3-user-1",
-        role: "user",
-        content: "Devo usar REST ou GraphQL no meu novo projeto?",
-        timestamp: "16:42"
-      },
-      {
-        id: "conv3-ai-1",
-        role: "assistant",
-        content: "## REST vs GraphQL\n\nAmbos têm seu espaço. Considere estes fatores:\n\n**REST é melhor quando:**\n- Você tem recursos simples e bem definidos\n- Cache é algo crítico\n- O time já conhece os padrões REST\n\n**GraphQL se destaca quando:**\n- Os clientes precisam de consultas de dados flexíveis\n- Você tem relacionamentos complexos e aninhados\n- Vários clientes precisam de formatos de dados diferentes\n\nPara a maioria dos projetos, REST continua sendo a escolha mais simples e com padrões já consolidados.",
-        timestamp: "16:43"
-      }
-    ]
-  },
-  {
-    id: "conv-4",
-    title: "Otimização de Performance",
-    preview: "Estratégias para melhorar métricas de performance em aplicações web...",
-    date: "12 jan.",
-    messages: [
-      {
-        id: "conv4-user-1",
-        role: "user",
-        content: "Meu app React está lento. Como posso otimizar?",
-        timestamp: "11:30"
-      },
-      {
-        id: "conv4-ai-1",
-        role: "assistant",
-        content: "## Otimização de Performance em React\n\nComece identificando gargalos com o React DevTools Profiler. Otimizações comuns:\n\n- **Memoização**: use React.memo, useMemo e useCallback de forma estratégica\n- **Code splitting**: carregue rotas e componentes pesados sob demanda\n- **Virtualização**: use react-window para listas longas\n- **Análise de bundle**: identifique e remova dependências não utilizadas\n\nLembre-se: primeiro meça, depois otimize. Otimização prematura é a raiz de muitos problemas.",
-        timestamp: "11:31"
-      }
-    ]
-  },
-  {
-    id: "conv-5",
-    title: "Generics no TypeScript",
-    preview: "Um mergulho em padrões avançados de TypeScript e inferência de tipos...",
-    date: "10 jan.",
-    messages: [
-      {
-        id: "conv5-user-1",
-        role: "user",
-        content: "Você pode explicar generics no TypeScript com exemplos práticos?",
-        timestamp: "20:15"
-      },
-      {
-        id: "conv5-ai-1",
-        role: "assistant",
-        content: "## Entendendo Generics no TypeScript\n\nGenerics permitem criar código reutilizável e seguro em relação a tipos:\n\n```typescript\n// Função genérica\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n\n// Interface genérica\ninterface Repository<T> {\n  find(id: string): Promise<T>;\n  save(item: T): Promise<void>;\n}\n\n// Restrição genérica\nfunction getProperty<T, K extends keyof T>(obj: T, key: K) {\n  return obj[key];\n}\n```\n\nGenerics brilham ao criar bibliotecas, utilitários e estruturas de dados que funcionam com vários tipos.",
-        timestamp: "20:17"
-      }
-    ]
-  }
-]
+// Mensagem inicial padrão do Saraiva (MenteMestra)
+const INITIAL_COUNCIL_MESSAGE: Message = {
+  id: "init-saraiva",
+  role: "assistant",
+  content: `**Saraiva entra na sala.**
 
-// Mock AI responses for new messages
-const mockResponses = [
-  "## Entendendo seu pedido\n\nAnalisei sua solicitação e identifiquei os pontos principais. Eis minha interpretação:\n\n- A intenção central parece ser exploratória\n- O contexto sugere a necessidade de uma explicação detalhada\n- Vou fornecer insights estruturados e acionáveis\n\nVou detalhar melhor os pontos abaixo.",
+Você acaba de entrar na sala mais perigosa que existe — não por armas, mas por ideias. Aqui sentaram generais que conquistaram impérios, empreendedores que dobraram a realidade, filósofos que destruíram certezas e as reconstruíram do zero.
 
-  "A arquitetura que você está descrevendo segue um padrão modular. Cada componente opera de forma independente, mantendo um estado coerente por meio de uma store centralizada.\n\n## Pontos importantes\n\n- Separação de responsabilidades é fundamental\n- Comunicação orientada a eventos reduz acoplamento\n- Segurança de tipos garante confiabilidade em escala\n\nEssa abordagem escala de forma elegante à medida que a complexidade cresce.",
+Eu sou o **Saraiva**. Meu trabalho é convocar as mentes certas, orquestrar o conflito entre elas, e garantir que você saia daqui com um plano de guerra — não com conselhos genéricos.
 
-  "## Implementação de código\n\nVeja uma forma de estruturar isso:\n\n```typescript\ninterface NeuralConfig {\n  threshold: number;\n  layers: number;\n  activation: 'relu' | 'sigmoid' | 'tanh';\n}\n\nconst initializeCore = (config: NeuralConfig) => {\n  return new NeuralProcessor(config);\n};\n```\n\nA implementação prioriza clareza e extensibilidade.",
+As cadeiras estão vazias. O Conselho só se reúne quando há um problema digno.
 
-  "Entendi o que você quer construir. A solução envolve três camadas interconectadas:\n\n- Processamento e validação de entrada\n- Lógica principal de transformação\n- Formatação e entrega da saída\n\nCada camada pode ser otimizada de forma independente, preservando a integridade do fluxo de dados."
-]
+**Qual é o seu problema?**`,
+  timestamp: "Agora"
+}
 
 export function NeuralCore() {
   const { theme, toggleTheme } = useTheme()
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations)
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>([INITIAL_COUNCIL_MESSAGE])
   const [inputValue, setInputValue] = useState("")
   const [isThinking, setIsThinking] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   const generateTimestamp = () => {
     const now = new Date()
     return now.toLocaleTimeString("pt-BR", { 
@@ -151,117 +41,172 @@ export function NeuralCore() {
       hour12: false 
     })
   }
-  
+
   const handleSelectConversation = useCallback((conversation: Conversation) => {
     setActiveConversation(conversation)
     setMessages(conversation.messages)
   }, [])
-  
+
   const handleNewConversation = useCallback(() => {
     setActiveConversation(null)
-    setMessages([])
+    setMessages([INITIAL_COUNCIL_MESSAGE])
     setSidebarOpen(false)
   }, [])
-  
-  const handleSubmit = useCallback(() => {
-    if (!inputValue.trim() || isThinking) return
-    
+
+  const sendMessageContent = async (textToSend: string) => {
+    if (!textToSend.trim() || isThinking) return
+
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
-      content: inputValue.trim(),
+      content: textToSend.trim(),
       timestamp: generateTimestamp()
     }
-    
-    const newMessages = [...messages, userMessage]
-    setMessages(newMessages)
+
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
     setInputValue("")
     setIsThinking(true)
-    
-    // Simulate AI response
-    const delay = 1500 + Math.random() * 1500
-    setTimeout(() => {
-      const responseIndex = Math.floor(Math.random() * mockResponses.length)
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        content: mockResponses[responseIndex],
-        timestamp: generateTimestamp()
+
+    // ID para a mensagem da IA que vai receber o stream
+    const assistantMessageId = `assistant-${Date.now()}`
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      role: "assistant",
+      content: "",
+      timestamp: generateTimestamp()
+    }
+
+    setMessages(prev => [...prev, assistantMessage])
+
+    try {
+      abortControllerRef.current = new AbortController()
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: updatedMessages }),
+        signal: abortControllerRef.current.signal
+      })
+
+      if (!response.ok) {
+        throw new Error("Falha ao comunicar com O Conselho.")
       }
-      
-      const updatedMessages = [...newMessages, assistantMessage]
-      setMessages(updatedMessages)
-      setIsThinking(false)
-      
-      // Update or create conversation in history
+
+      if (!response.body) return
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let accumulatedText = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        accumulatedText += chunk
+
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === assistantMessageId
+              ? { ...msg, content: accumulatedText }
+              : msg
+          )
+        )
+      }
+
+      // Atualizar no histórico de conversas
+      const finalMessages = [
+        ...updatedMessages,
+        { ...assistantMessage, content: accumulatedText }
+      ]
+
       if (activeConversation) {
-        // Update existing conversation
-        setConversations(prev => prev.map(conv => 
-          conv.id === activeConversation.id 
-            ? { ...conv, messages: updatedMessages, preview: userMessage.content }
-            : conv
-        ))
-        setActiveConversation(prev => prev ? { ...prev, messages: updatedMessages } : null)
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === activeConversation.id
+              ? { ...conv, messages: finalMessages, preview: userMessage.content }
+              : conv
+          )
+        )
       } else {
-        // Create new conversation
-        const newConversation: Conversation = {
+        const newConv: Conversation = {
           id: `conv-${Date.now()}`,
           title: userMessage.content.slice(0, 40) + (userMessage.content.length > 40 ? "..." : ""),
-          preview: assistantMessage.content.slice(0, 80) + "...",
+          preview: accumulatedText.slice(0, 80) + "...",
           date: "Hoje",
-          messages: updatedMessages
+          messages: finalMessages
         }
-        setConversations(prev => [newConversation, ...prev])
-        setActiveConversation(newConversation)
+        setConversations(prev => [newConv, ...prev])
+        setActiveConversation(newConv)
       }
-    }, delay)
-  }, [inputValue, isThinking, messages, activeConversation])
-  
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === assistantMessageId
+              ? {
+                  ...msg,
+                  content: "⚠️ **Erro ao conectar com O Conselho:** " + (err.message || "Erro desconhecido")
+                }
+              : msg
+          )
+        )
+      }
+    } finally {
+      setIsThinking(false)
+    }
+  }
+
+  const handleSubmit = useCallback(() => {
+    sendMessageContent(inputValue)
+  }, [inputValue, isThinking, messages])
+
+  const handleQuickOption = (optionText: string) => {
+    sendMessageContent(optionText)
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background relative overflow-hidden">
-      {/* Noise overlay */}
+      {/* Overlay */}
       <div className="noise-overlay" aria-hidden="true" />
       
       {/* Header */}
-      <header className="flex items-center justify-between px-6 md:px-16 lg:px-24 py-4 border-b border-border">
+      <header className="flex items-center justify-between px-6 md:px-16 lg:px-24 py-4 border-b border-border bg-background/80 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[11px] tracking-[0.2em] text-foreground uppercase">
-            Neural_Core
-          </span>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400">
+            <Users className="w-3.5 h-3.5" />
+            <span className="font-mono text-[11px] font-semibold tracking-wider uppercase">
+              O Conselho
+            </span>
+          </div>
           <span className="font-mono text-[9px] text-muted-foreground/50">
             //
           </span>
-          <span className="font-mono text-[9px] text-muted-foreground/50 uppercase truncate max-w-[200px]">
-            {activeConversation ? activeConversation.title : "Nova conversa"}
+          <span className="font-mono text-[10px] text-violet-400 uppercase font-medium">
+            Líder: Saraiva
           </span>
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Theme toggle */}
+          {/* Alternar tema */}
           <button
             onClick={toggleTheme}
-            className="flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
+            className="flex items-center justify-center w-8 h-8 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Alternar tema"
           >
-            {theme === "dark" ? (
-              <Sun className="w-4 h-4" />
-            ) : (
-              <Moon className="w-4 h-4" />
-            )}
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           
-          {/* History button */}
+          {/* Histórico */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 text-muted-foreground hover:text-foreground transition-colors magnetic-hover"
-            aria-label="Abrir barra lateral do histórico"
+            className="flex items-center gap-2 px-3 py-1.5 text-muted-foreground hover:text-foreground transition-colors border border-border/50 rounded-md"
           >
             <Layers className="w-4 h-4" />
             <span className="font-mono text-[10px] tracking-wider uppercase hidden sm:inline">
               Histórico
             </span>
             {conversations.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 bg-violet-500/20 text-violet-400 font-mono text-[9px]">
+              <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 font-mono text-[9px] rounded">
                 {conversations.length}
               </span>
             )}
@@ -269,13 +214,50 @@ export function NeuralCore() {
         </div>
       </header>
       
-      {/* Main content */}
+      {/* Área principal do chat */}
       <ConversationStream 
         messages={messages} 
         isThinking={isThinking} 
       />
+
+      {/* Botões rápidos de controle do Round (quando não está pensando) */}
+      {!isThinking && messages.length > 1 && (
+        <div className="px-6 md:px-16 lg:px-24 py-2 border-t border-border/40 bg-background/50 backdrop-blur-sm flex flex-wrap items-center justify-center gap-2 z-10">
+          <span className="font-mono text-[10px] text-muted-foreground uppercase mr-1">Comandos do Round:</span>
+          <button
+            onClick={() => handleQuickOption("1 - Avançar para o próximo round")}
+            className="px-2.5 py-1 text-[11px] font-mono bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded transition-all"
+          >
+            1️⃣ Próximo Round
+          </button>
+          <button
+            onClick={() => handleQuickOption("2 - Aprofundar um ponto específico")}
+            className="px-2.5 py-1 text-[11px] font-mono bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded transition-all"
+          >
+            2️⃣ Aprofundar
+          </button>
+          <button
+            onClick={() => handleQuickOption("3 - Convocar mente adicional ao Conselho")}
+            className="px-2.5 py-1 text-[11px] font-mono bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded transition-all"
+          >
+            3️⃣ Convocar Mente
+          </button>
+          <button
+            onClick={() => handleQuickOption("4 - Provocar duelo entre duas mentes")}
+            className="px-2.5 py-1 text-[11px] font-mono bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded transition-all"
+          >
+            4️⃣ Provocar Duelo
+          </button>
+          <button
+            onClick={() => handleQuickOption("5 - Ir direto ao Plano de Ataque")}
+            className="px-2.5 py-1 text-[11px] font-mono bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded transition-all"
+          >
+            5️⃣ Plano de Ataque
+          </button>
+        </div>
+      )}
       
-      {/* Command dock */}
+      {/* Dock de comandos */}
       <CommandDock
         value={inputValue}
         onChange={setInputValue}
@@ -284,7 +266,7 @@ export function NeuralCore() {
         disabled={isThinking}
       />
       
-      {/* History sidebar */}
+      {/* Barra lateral do Histórico */}
       <LatentSidebar 
         isOpen={sidebarOpen} 
         onClose={() => setSidebarOpen(false)}
