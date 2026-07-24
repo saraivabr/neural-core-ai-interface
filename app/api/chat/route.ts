@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import OpenAI from "openai"
 import { NextRequest, NextResponse } from "next/server"
 import fs from "fs"
 import path from "path"
@@ -9,10 +9,11 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
 
-    const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = process.env.OPENAI_API_KEY
+
     if (!apiKey) {
       return NextResponse.json(
-        { error: "GEMINI_API_KEY não configurada no servidor." },
+        { error: "OPENAI_API_KEY não foi configurada no ambiente." },
         { status: 500 }
       )
     }
@@ -27,34 +28,36 @@ export async function POST(req: NextRequest) {
       systemInstruction = fs.readFileSync(instructionsPath, "utf-8")
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: systemInstruction,
+    const openai = new OpenAI({ apiKey })
+
+    // Formatar histórico para OpenAI
+    const formattedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+      {
+        role: "system",
+        content: systemInstruction,
+      },
+      ...messages.map((msg: any) => ({
+        role: msg.role === "assistant" ? ("assistant" as const) : ("user" as const),
+        content: msg.content,
+      })),
+    ]
+
+    const responseStream = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: formattedMessages,
+      temperature: 0.7,
+      stream: true,
     })
 
-    // Converter mensagens para o formato do Gemini API
-    const history = messages.slice(0, -1).map((msg: any) => ({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
-    }))
-
-    const lastMessage = messages[messages.length - 1]?.content || ""
-
-    const chat = model.startChat({
-      history: history,
-    })
-
-    const result = await chat.sendMessageStream(lastMessage)
-
-    // Stream de resposta no formato Server-Sent Events / ReadableStream
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of result.stream) {
-            const text = chunk.text()
-            controller.enqueue(encoder.encode(text))
+          for await (const chunk of responseStream) {
+            const content = chunk.choices[0]?.delta?.content || ""
+            if (content) {
+              controller.enqueue(encoder.encode(content))
+            }
           }
           controller.close()
         } catch (err) {
@@ -70,7 +73,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error("Erro na rota /api/chat:", error)
+    console.error("Erro na rota /api/chat (OpenAI):", error)
     return NextResponse.json(
       { error: error?.message || "Erro interno do servidor" },
       { status: 500 }
